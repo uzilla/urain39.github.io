@@ -44,6 +44,20 @@ def f(x): return x >> 2
 
 当我们使用`@`修饰`f()`函数后直接调用函数f其实相当于`log(f)(x)`，其中`f()`作为回调函数传入装饰器`log()`中然后被闭包函数`wrapped_fn()`装饰以后返回给主线程调用。这个过程应该非常好理解，因为偶尔我们也会用到使用回调函数实现类似装饰器的一些用法。
 
+**注意：但这并不是最简单的装饰器！**
+
+下面这段话可能会对你深入了解装饰器有帮助
+
+> 装饰器的本质是在不改变函数或方法的同时为方法添上新的功能，所以只要最终返回的结果是可调用对象(哪怕你只是直接返回回调本身好)即可被定义为装饰器。
+
+```python
+def log(fn):
+    return fn
+
+@log
+def f(): pass
+```
+↑ 以上才是最简单的装饰器 ↑
 
 
 ### 较为复杂的装饰器 ###
@@ -51,16 +65,9 @@ def f(x): return x >> 2
 上面的装饰器是最简单的装饰器实现，而通常我们见到的装饰器并非像上面这样的装饰器，而是更加复杂带参数的装饰器，比如我之前写的一个`@command.register()`装饰器：
 
 ```python
-class KngetCommand(object):
-    """Manage the commands of the KngetShell.
-    """
-
-    def __init__(self):
-        self._commands = {}
-
     def register(self, argtypes=r'M', help_msg=None):
-        """register a method to a command.
-        NOTE: Method registered here is a Knget-like method,
+        """Register a method to a command.
+        NOTE: Method registered here is unbound method,
               e.g. registered `run` command -> `KngetShell.run`
               So we call it should add `self` at first.
             See also: KngetShell.execute()
@@ -73,14 +80,11 @@ class KngetCommand(object):
         """
 
         def format_args(method):
-            self._commands[method.__name__] = (
-                method, help_msg
-            )
-
             def wrapped_method(*args, **kwargs):
                 if len(args) != len(argtypes):
                     raise KngetError("args count is not equals to argtypes count.")
 
+                # NOTE: We cannot modify the args.
                 argv = []
                 for i in range(len(argtypes)):
                     if argtypes[i] in ('m', 'M'):
@@ -92,6 +96,9 @@ class KngetCommand(object):
 
                 return method(*argv, **kwargs)
 
+            self._commands[method.__name__] = (
+                wrapped_method, help_msg
+            )
             return wrapped_method
 
         # format_args first touch the method
@@ -110,9 +117,12 @@ class KngetCommand(object):
 
 
 
-在方法`KngetCommand.register()`中我们可以看到其中有一个名为`format_args()`的闭包函数含有一个名为`method`的参数，这个参数其实就是我们传入的真实方法。外部的方法`@KngetCommand.register()`则只是用来处理外部调用传递给我们的参数返回一个合适的装饰器。而`format_args()`就是这个被返回的临时被定义的装饰器。
+在方法`KngetCommand.register()`中我们可以看到其中有一个名为`format_args()`的闭包函数含有一个名为`method`的参数，这个参数其实就是我们传入的真实方法。外部的方法`@KngetCommand.register()`则只是用来处理外部调用传递给我们的参数返回一个合适的装饰器。而`format_args()`就是这个被返回真正的装饰器。
 
-使用这个装饰器的方法只需`@KngetCommand.register(参数列表...)`即可。装饰器的调用过程与无参数装饰器类似，假设我们用来修饰一个名为`Knget.run()`的方法那么这个装饰器的执行过程应该为`KngetCommand.register`载入参数后返回`format_args()`装饰器修饰`Knget.run()`，并将装饰好的函数`wrapped_method`结果赋值于`Knget.run()`。原有的方法被`wrapped_method`所代替，这一点可以在help函数时看到。但是从内存模型的角度来讲因为Python的无(标识符)引用则删除的GC机制，方法本身则在`wrapped_method`中找到类新的标识符，所以并不会真的被代替。
+
+使用这个装饰器的方法只需`@KngetCommand.register(参数列表...)`即可。装饰器的调用过程与无参数装饰器类似，假设我们用来修饰一个名为`Knget.run()`的方法那么这个装饰器的执行过程应该为`KngetCommand.register`载入参数后返回`format_args()`装饰器装饰`Knget.run()`，并将装饰好的函数`wrapped_method`结果赋值于`Knget.run()`。
+
+**注意：装饰器在函数或方法声明以后就已经装饰完毕了！**原有的方法被`wrapped_method`所代替，这一点可以在help函数时看到。但是从内存模型的角度来讲因为Python的无(标识符)引用则删除的GC机制，方法本身则在`wrapped_method`中找到类新的标识符，所以并不会真的被删除。
 
 ```
  |  ----------------------------------------------------------------------
@@ -142,12 +152,11 @@ class KngetCommand(object):
 此外如果不喜欢多层嵌套的闭包函数定义，也可以单独定义装饰器然后使用装饰器处理函数直接返回。
 
 
-
 **WARNING: 以下内容如果你并没有遇到过或者看不懂请直接忽略，因为很大可能只是我个人造成的问题。**
 
 值得注意的是如果你真的像我这样做了那么你可能会遇到一个问题，装饰后的方法可能会丢失掉`self`参数。这是理所当然的事，因为你可以在上面我写的英语文档里看到下面这样一句话：
 
-> Method registered here is a Knget-like method, e.g. registered \`run\` command -> \`KngetShell.run\`
+> Method registered here is unbound method, e.g. registered \`run\` command -> \`KngetShell.run\`
 
 注册的方法被保存在一个字典内，但实际上注册的方法依然是指向类方法本身即`KngetShell.run`所以调用时理所当然的就丢失了`self`参数。
 
