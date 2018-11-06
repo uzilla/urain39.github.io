@@ -1,5 +1,10 @@
 #profile-list {
-	/* 居中 */
-	margin-left: 125px;
+}
+
+@media and (min-width:768px) {
+	#profile-list {
+		/* 修复PC页面居中问题 */
+		margin-left: 125px;
+	}
 }
 
