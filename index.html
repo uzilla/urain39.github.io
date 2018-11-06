@@ -6,8 +6,6 @@ description: "或许是最差劲的博客。"
 
 {% include header.html %}
 
-<link rel="stylesheet" href="/assets/css/about.css">
-
 <div class="g-banner home-banner {{ site.theme-color | prepend: 'banner-theme-' }}" data-theme="{{ site.theme-color }}">
     <h2>{{ page.home-title }}</h2>
     <h3>{{ page.description }}</h3>
@@ -18,7 +16,7 @@ description: "或许是最差劲的博客。"
 
 
 <main class="g-container home-content">
-    <div class="article-list" id="profile-list">
+    <div class="article-list">
         {% for post in paginator.posts %}
             <article class="article-item">
                 {% if post.cover %}
