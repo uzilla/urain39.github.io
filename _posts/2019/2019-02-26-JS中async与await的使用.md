@@ -52,8 +52,20 @@ main() // -> 新的Promise对象
 ```
 `await`会一直阻塞异步线程，直到`sleep`函数返回的`Promise`对象中的定时器归零后调用`resolve`函数时才往下执行。如果`await`的`Promise`对象是由多次调用`then`方法组成的**链式结构**，那么`await`则以最终的`resolve`结果为准。
 
+## 返回值的处理
+```js
+async function f(x) {
+  return Math.pow(x, 2);
+}
+
+(async function() {
+  console.log(await f(9)); // => 81
+})();
+```
+
 ## 本文小结
 - async/await比Promise更为强大。
 - await能够等待Promise执行完毕。
 - await只能够用在被async修饰的函数中。
 - async可以将函数转换为返回Promise对象的函数。
+- async函数中的return会被转换为resolve的值。
