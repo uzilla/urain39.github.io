@@ -25,11 +25,8 @@
 		var mirrorHost = 'moeloli.ml';
 		var redirectHost = 'ReiujiUtsuho.github.io';
 
-		var u = new URL(self.location.href);
-
-		if (u.host == mirrorHost) {
-			u.host = redirectHost;
-			self.location.href = u.toString();
+		if (self.location.host === mirrorHost) {
+			self.location.host = redirectHost;
 		}
 	})();
 	</script>
