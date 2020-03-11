@@ -1,6 +1,6 @@
 (function() {
 	var date = new Date();
-	var pathname = self.location.pathname
+	var pathname = self.location.pathname;
 	var postYear = parseInt(pathname.slice(1, 5));
 	var postMonth = parseInt(pathname.slice(6, 8));
 	if ((date.getFullYear() - postYear) * 12 +
@@ -12,7 +12,7 @@
 	notice.style['width'] = '100%';
 	notice.style['text-align'] = 'center';
 	notice.style['background'] = '#ffee00';
-	notice.innerHTML = '<h2>注意：页面内容可能过时或不正确，请谨慎参考。</h2>';
+	notice.innerHTML = '<h2>注意：页面内容可能过时或不正确，请谨慎参考！</h2>';
 	var firstChild = document.body.firstChild;
 	document.body.insertBefore(notice, firstChild);
 	setTimeout(function () {
