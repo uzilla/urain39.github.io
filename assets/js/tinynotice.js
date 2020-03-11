@@ -12,7 +12,11 @@
 	notice.style['width'] = '100%';
 	notice.style['text-align'] = 'center';
 	notice.style['background'] = '#ffee00';
-	notice.innerHTML = '<h2>注意：页面内容可能过时或不正确，请谨慎参考！</h2>';
+	var language = (navigator.browserLanguage || navigator.language).toLowerCase();
+	if (language === 'zh-cn')
+		notice.innerHTML = '<h2>注意：页面内容可能过时或不正确，请谨慎参考！</h2>';
+	else
+		notice.innerHTML = '<h3>Note: The page content may be outdated or incorrect, please use caution!</h3>';
 	var firstChild = document.body.firstChild;
 	document.body.insertBefore(notice, firstChild);
 	setTimeout(function () {
